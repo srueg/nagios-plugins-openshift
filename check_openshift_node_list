@@ -11,17 +11,20 @@ usage() {
   echo
   echo 'Options:'
   echo ' -f   Config file path'
+  echo ' -l   Label selector (optional)'
 }
 
 opt_cfgfile=
+opt_selector=
 
-while getopts 'hf:' opt; do
+while getopts 'hf:l:' opt; do
   case "$opt" in
     h)
       usage
       exit 0
       ;;
     f) opt_cfgfile="$OPTARG" ;;
+    l) opt_selector="$OPTARG" ;;
     *)
       usage >&2
       exit 1
@@ -41,8 +44,13 @@ trap 'rm -f "$tmpfile"' EXIT
 
 get_node_names() {
   local cfgfile="$1"
+  oc_args=
 
-  run_oc "$cfgfile" get node \
+  if [[ -n "$opt_selector" ]]; then
+    oc_args+=( --selector="$opt_selector" )
+  fi
+
+  run_oc "$cfgfile" get node "${oc_args[@]}" \
     --output=jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
 }
 
